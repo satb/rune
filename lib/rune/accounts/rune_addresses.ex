@@ -6,15 +6,14 @@ defmodule Rune.RuneAddresses do
   @page_limit 1000
 
   @initial_interval 250
-  @interval 6*60*60*1000 #every 6 hrs update
-  @jitter 20
+  @interval 24*60*60*1000 #every 24 hrs update
 
 
   def get_frozen_rune_accounts do
     account_balances = GenServer.call(__MODULE__, :get_account_balances)
-    account_balances
+    account_balances["data"]
     |> Enum.filter(fn a ->
-        Enum.find(a["balance"], & &1["asset"] == "RUNE-B1A" && &1["frozen"] > 0)
+        a["frozen"] > 0
     end)
   end
 
@@ -25,7 +24,7 @@ defmodule Rune.RuneAddresses do
 
   def init(_args) do
     Process.send_after(self(), :work, @initial_interval)
-    {:ok, nil}
+    {:ok, %{"started" => nil, "ended" => nil, "data" => nil}}
   end
 
   def handle_call(:get_account_balances, _from, state) do
@@ -33,12 +32,17 @@ defmodule Rune.RuneAddresses do
   end
 
   def handle_info(:work, _state) do
-    Process.send_after(self(), :work, @interval + :rand.uniform(@jitter))
     IO.puts("Getting account balances....")
+    started = DateTime.utc_now()
     acct_balances = get_accounts_with_balances()
+    ended = DateTime.utc_now()
     IO.puts("Done fetching account balances...")
-    IO.inspect(acct_balances)
-    {:noreply, acct_balances}
+    Process.send_after(self(), :work, @interval)
+    {:noreply, %{"started" => started, "ended" => ended, "data" => acct_balances} }
+  end
+
+  def handle_info(_, state) do
+     {:no_reply, state}
   end
 
   def get_accounts_with_balances() do
@@ -49,14 +53,13 @@ defmodule Rune.RuneAddresses do
         [acc | holders]
       end)
       |> List.flatten()
-    IO.puts("full list length #{length(hlist)}")
     hlist
       |> Enum.reduce([], fn a, acc ->
-          :timer.sleep(1000)
           balance = get_balances(a["address"])
-          [acc | [balance]]
+          b = balance["balance"] |> Enum.find(& &1["asset"] == "RUNE-B1A")
+          rune_balance = %{"address" => balance["address"], "asset" => b["asset"], "free" => b["free"], "frozen" => b["frozen"]}
+          [rune_balance | acc]
         end)
-      |> List.flatten
   end
 
   defp get_page(page_num) do
