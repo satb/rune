@@ -54,6 +54,7 @@ defmodule Rune.RuneAddresses do
       end)
       |> List.flatten()
     hlist
+      |> Enum.take(3)
       |> Enum.reduce([], fn a, acc ->
           balance = get_balances(a["address"])
           b = balance["balance"] |> Enum.find(& &1["asset"] == "RUNE-B1A")
@@ -72,7 +73,9 @@ defmodule Rune.RuneAddresses do
 
   def get_balances(account) do
     IO.puts("fetching balance for account #{account}")
-    {:ok, %HTTPoison.Response{status_code: 200, body: body}} =  HTTPoison.get("#{@url}/balances/#{account}")
+    options = [ssl: [{:versions, [:'tlsv1.2']}], recv_timeout: 10000]
+    headers = ["Accept": "Application/json; Charset=utf-8"]
+    {:ok, %HTTPoison.Response{status_code: 200, body: body}} =  HTTPoison.get("#{@url}/balances/#{account}", headers, options)
     Jason.decode!(body)
   end
 end
