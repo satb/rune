@@ -1,0 +1,18 @@
+<section class="phx-hero">
+  <h1>A Simple Rune Experiment</h1>
+  <p>Get accounts have rune frozen.</p>
+</section>
+
+<section class="row">
+  <article class="column">
+    <h2>List of accounts that have $RUNE frozen</h2>
+    <ul>
+      <%=for acct <- @frozen_accts do %>
+      <% url = "https://explorer.binance.org/address/#{acct["address"]}"%>
+      <li>
+        <a target="blank" href="<%=url%>"><%=acct["address"]%></a>
+      </li>
+     <%end%>
+    </ul>
+  </article>
+</section>
