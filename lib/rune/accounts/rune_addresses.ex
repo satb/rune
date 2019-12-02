@@ -42,7 +42,7 @@ defmodule Rune.RuneAddresses do
   end
 
   def handle_info(_, state) do
-     {:no_reply, state}
+     {:noreply, state}
   end
 
   def get_accounts_with_balances() do
