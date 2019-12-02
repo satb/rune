@@ -54,7 +54,6 @@ defmodule Rune.RuneAddresses do
       end)
       |> List.flatten()
     hlist
-      |> Enum.take(3)
       |> Enum.reduce([], fn a, acc ->
           balance = get_balances(a["address"])
           b = balance["balance"] |> Enum.find(& &1["asset"] == "RUNE-B1A")
